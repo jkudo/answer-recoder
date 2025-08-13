@@ -139,7 +139,11 @@
             margin-bottom: 30px;
         }
         
-        .next-btn, .prev-btn, .clear-btn {
+        .control-group {
+            margin-bottom: 10px;
+        }
+        
+        .next-btn, .prev-btn, .clear-btn, .check-btn, .export-btn {
             padding: 10px 20px;
             margin: 0 5px;
             font-size: 16px;
@@ -165,6 +169,24 @@
         
         .prev-btn:hover {
             background: #1976D2;
+        }
+        
+        .check-btn {
+            background: #ff9800;
+            color: white;
+        }
+        
+        .check-btn:hover {
+            background: #f57000;
+        }
+        
+        .export-btn {
+            background: #9c27b0;
+            color: white;
+        }
+        
+        .export-btn:hover {
+            background: #7b1fa2;
         }
         
         .clear-btn {
@@ -247,6 +269,103 @@
             font-weight: bold;
             color: #666;
         }
+        
+        .check-mode {
+            display: none;
+        }
+        
+        .check-mode.show {
+            display: block;
+        }
+        
+        .check-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        
+        .check-table th,
+        .check-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: center;
+        }
+        
+        .check-table th {
+            background: #f5f5f5;
+            font-weight: bold;
+        }
+        
+        .check-table tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        
+        .correct-btn,
+        .incorrect-btn {
+            padding: 6px 12px;
+            margin: 0 3px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .correct-btn {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .correct-btn:hover {
+            background: #45a049;
+        }
+        
+        .incorrect-btn {
+            background: #f44336;
+            color: white;
+        }
+        
+        .incorrect-btn:hover {
+            background: #da190b;
+        }
+        
+        .correct-btn.selected {
+            background: #2e7d32;
+            box-shadow: 0 0 0 2px #81c784;
+        }
+        
+        .incorrect-btn.selected {
+            background: #c62828;
+            box-shadow: 0 0 0 2px #ef5350;
+        }
+        
+        .score-summary {
+            background: #e3f2fd;
+            border: 1px solid #2196F3;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            text-align: center;
+        }
+        
+        .score-item {
+            display: inline-block;
+            margin: 0 15px;
+            font-weight: bold;
+        }
+        
+        .score-correct {
+            color: #4CAF50;
+        }
+        
+        .score-incorrect {
+            color: #f44336;
+        }
+        
+        .score-rate {
+            color: #2196F3;
+            font-size: 18px;
+        }
     </style>
 </head>
 <body>
@@ -278,7 +397,7 @@
             </div>
         </div>
         
-        <div class="question-section">
+        <div class="question-section" id="questionSection">
             <div class="question-number">問題 <span id="questionNumber">1</span></div>
             
             <div class="answer-buttons" id="answerButtons">
@@ -286,20 +405,58 @@
             </div>
         </div>
         
-        <div class="controls">
-            <button class="prev-btn" onclick="prevQuestion()">前の問題</button>
-            <button class="next-btn" onclick="nextQuestion()">次の問題</button>
-            <button class="clear-btn" onclick="clearAll()">全てクリア</button>
+        <div class="controls" id="normalControls">
+            <div class="control-group">
+                <button class="prev-btn" onclick="prevQuestion()">前の問題</button>
+                <button class="next-btn" onclick="nextQuestion()">次の問題</button>
+            </div>
+            <div class="control-group">
+                <button class="check-btn" onclick="toggleCheckMode()">📊 答え合わせ</button>
+                <button class="clear-btn" onclick="clearAll()">全てクリア</button>
+            </div>
+        </div>
+        
+        <div class="controls" id="checkControls" style="display: none;">
+            <div class="control-group">
+                <button class="check-btn" onclick="toggleCheckMode()">📝 通常表示</button>
+                <button class="export-btn" onclick="exportAnswers()">💾 エクスポート</button>
+            </div>
         </div>
         
         <div class="record-section">
             <div class="record-title">📋 回答記録</div>
-            <div class="answer-record" id="answerRecord">
-                <div style="text-align: center; color: #999; padding: 20px;">
-                    まだ回答がありません
+            
+            <!-- 通常モード -->
+            <div class="normal-mode" id="normalMode">
+                <div class="answer-record" id="answerRecord">
+                    <div style="text-align: center; color: #999; padding: 20px;">
+                        まだ回答がありません
+                    </div>
+                </div>
+                <div class="total-count" id="totalCount">総回答数: 0</div>
+            </div>
+            
+            <!-- 答え合わせモード -->
+            <div class="check-mode" id="checkMode">
+                <table class="check-table" id="checkTable">
+                    <thead>
+                        <tr>
+                            <th>問題番号</th>
+                            <th>回答</th>
+                            <th>正誤</th>
+                        </tr>
+                    </thead>
+                    <tbody id="checkTableBody">
+                        <!-- 動的に生成される -->
+                    </tbody>
+                </table>
+                <div class="score-summary" id="scoreSummary">
+                    <div class="score-item score-correct">正解: <span id="correctCount">0</span>問</div>
+                    <div class="score-item score-incorrect">不正解: <span id="incorrectCount">0</span>問</div>
+                    <div class="score-item">未採点: <span id="unansweredCount">0</span>問</div>
+                    <div class="score-item score-rate">正答率: <span id="correctRate">0</span>%</div>
                 </div>
             </div>
-            <div class="total-count" id="totalCount">総回答数: 0</div>
         </div>
     </div>
 
@@ -308,6 +465,7 @@
         let answers = [];
         let currentChoiceType = 'aiueo';
         let currentChoiceCount = 4;
+        let isCheckMode = false;
 
         // 選択肢のマッピング
         const choiceTypes = {
@@ -363,20 +521,19 @@
         }
 
         function recordAnswer(answer) {
-            // 回答を記録
-            answers.push({
+            // 回答を記録（最新を先頭に追加）
+            answers.unshift({
                 question: questionNumber,
                 answer: answer,
-                id: Date.now() // ユニークIDを追加
+                id: Date.now(),
+                isCorrect: null // 未採点
             });
             
             // 記録を更新
             updateRecord();
             
-            // 自動的に次の問題に進む
-            setTimeout(() => {
-                nextQuestion();
-            }, 300);
+            // 確実に次の問題に進む
+            nextQuestion();
         }
 
         function nextQuestion() {
@@ -394,6 +551,79 @@
         function deleteAnswer(id) {
             answers = answers.filter(item => item.id !== id);
             updateRecord();
+        }
+
+        function toggleCheckMode() {
+            isCheckMode = !isCheckMode;
+            const questionSection = document.getElementById('questionSection');
+            const normalControls = document.getElementById('normalControls');
+            const checkControls = document.getElementById('checkControls');
+            const normalMode = document.getElementById('normalMode');
+            const checkMode = document.getElementById('checkMode');
+            
+            if (isCheckMode) {
+                // 答え合わせモード
+                questionSection.style.display = 'none';
+                normalControls.style.display = 'none';
+                checkControls.style.display = 'block';
+                normalMode.style.display = 'none';
+                checkMode.classList.add('show');
+                updateCheckTable();
+            } else {
+                // 通常モード
+                questionSection.style.display = 'block';
+                normalControls.style.display = 'block';
+                checkControls.style.display = 'none';
+                normalMode.style.display = 'block';
+                checkMode.classList.remove('show');
+            }
+        }
+
+        function updateCheckTable() {
+            const tableBody = document.getElementById('checkTableBody');
+            
+            if (answers.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="3" style="color: #999; padding: 20px;">まだ回答がありません</td></tr>';
+            } else {
+                // 答え合わせモードでは問題番号順にソート
+                const sortedAnswers = [...answers].sort((a, b) => a.question - b.question);
+                
+                tableBody.innerHTML = sortedAnswers.map(item => 
+                    `<tr>
+                        <td>問題 ${item.question}</td>
+                        <td><strong>${item.answer}</strong></td>
+                        <td>
+                            <button class="correct-btn ${item.isCorrect === true ? 'selected' : ''}" 
+                                    onclick="setCorrectness(${item.id}, true)">正解</button>
+                            <button class="incorrect-btn ${item.isCorrect === false ? 'selected' : ''}" 
+                                    onclick="setCorrectness(${item.id}, false)">不正解</button>
+                        </td>
+                    </tr>`
+                ).join('');
+            }
+            
+            updateScoreSummary();
+        }
+
+        function setCorrectness(id, isCorrect) {
+            const answer = answers.find(item => item.id === id);
+            if (answer) {
+                answer.isCorrect = isCorrect;
+                updateCheckTable();
+            }
+        }
+
+        function updateScoreSummary() {
+            const correctCount = answers.filter(item => item.isCorrect === true).length;
+            const incorrectCount = answers.filter(item => item.isCorrect === false).length;
+            const unansweredCount = answers.filter(item => item.isCorrect === null).length;
+            const totalAnswered = correctCount + incorrectCount;
+            const correctRate = totalAnswered > 0 ? Math.round((correctCount / totalAnswered) * 100) : 0;
+            
+            document.getElementById('correctCount').textContent = correctCount;
+            document.getElementById('incorrectCount').textContent = incorrectCount;
+            document.getElementById('unansweredCount').textContent = unansweredCount;
+            document.getElementById('correctRate').textContent = correctRate;
         }
 
         function updateRecord() {
@@ -415,12 +645,83 @@
             totalCountDiv.textContent = `総回答数: ${answers.length}`;
         }
 
+        function exportAnswers() {
+            if (answers.length === 0) {
+                alert('エクスポートする回答がありません。');
+                return;
+            }
+            
+            // 問題番号順にソート
+            const sortedAnswers = [...answers].sort((a, b) => a.question - b.question);
+            
+            // ヘッダー情報
+            const now = new Date();
+            const timestamp = now.toLocaleString('ja-JP');
+            let textContent = `模擬問題回答記録\n`;
+            textContent += `出力日時: ${timestamp}\n`;
+            textContent += `総回答数: ${answers.length}問\n`;
+            textContent += `\n`;
+            
+            // スコア情報（採点されている場合）
+            const correctCount = answers.filter(item => item.isCorrect === true).length;
+            const incorrectCount = answers.filter(item => item.isCorrect === false).length;
+            const unansweredCount = answers.filter(item => item.isCorrect === null).length;
+            
+            if (correctCount > 0 || incorrectCount > 0) {
+                const totalAnswered = correctCount + incorrectCount;
+                const correctRate = totalAnswered > 0 ? Math.round((correctCount / totalAnswered) * 100) : 0;
+                
+                textContent += `採点結果:\n`;
+                textContent += `正解: ${correctCount}問\n`;
+                textContent += `不正解: ${incorrectCount}問\n`;
+                textContent += `未採点: ${unansweredCount}問\n`;
+                textContent += `正答率: ${correctRate}%\n`;
+                textContent += `\n`;
+            }
+            
+            // 回答一覧
+            textContent += `回答一覧:\n`;
+            textContent += `----------------------------------------\n`;
+            
+            sortedAnswers.forEach(item => {
+                let line = `問題 ${item.question}: ${item.answer}`;
+                
+                // 正誤情報があれば追加
+                if (item.isCorrect === true) {
+                    line += ` (正解)`;
+                } else if (item.isCorrect === false) {
+                    line += ` (不正解)`;
+                }
+                
+                textContent += line + `\n`;
+            });
+            
+            // ファイルをダウンロード
+            const blob = new Blob([textContent], { type: 'text/plain; charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            
+            // ファイル名を生成（日時を含む）
+            const dateStr = now.toISOString().slice(0, 19).replace(/:/g, '-');
+            a.href = url;
+            a.download = `模擬問題回答記録_${dateStr}.txt`;
+            
+            // ダウンロードを実行
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
         function clearAll() {
             if (answers.length > 0 && confirm('全ての回答記録を削除しますか？')) {
                 answers = [];
                 questionNumber = 1;
                 document.getElementById('questionNumber').textContent = questionNumber;
                 updateRecord();
+                if (isCheckMode) {
+                    updateCheckTable();
+                }
             }
         }
 
